@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Face Authentication System{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="text-center">YUZ AUTENFIKATSIYA TIZIMIGA XUSH KELIBSIZ</h2>
+    </div>
+    <div class="card-body">
+        <div class="text-center">
+            <p class="lead">SIZ TIZIMGA KIRISH YOKI RO'YXATDAN O'TISHDA XAVFSIZLIKNI OSHIRISH UCHUN YUZ MA'LUMOTLARINGIZ YOKI LOGIN VA PAROLLARDAN FOYDALANISHINGIZ MUMKIN</p>
+            
+            {% if user.is_authenticated %}
+                <p>You are logged in as <strong>{{ user.username }}</strong></p>
+                <a href="{% url 'dashboard' %}" class="btn btn-primary" >Dashboardga o'tish/a>
+                <a href="{% url 'logout' %}" class="btn btn-outline-secondary">Logout</a>
+            {% else %}
+                <p>TIZIMGA KIRISH YOKI RO'YXATDAN O'TISHNI TANLANG</p>
+                <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+                <a href="{% url 'register' %}" class="btn btn-outline-secondary">Register</a>
+                <p ALIGN="RIGHT">BEKFURR INC 2025</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

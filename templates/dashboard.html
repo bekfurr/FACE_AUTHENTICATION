@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Face Authentication System{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="text-center">Dashboard</h2>
+    </div>
+    <div class="card-body">
+        <div class="text-center">
+            <h3>HUSH KELIBSIZ, {{ user.username }}!</h3>
+            <p class="lead">SIZ YUZ AUTENFIKATSIYA TIZIMIGA MUVOFAQQIYATLI KIRDINGIZ</p>
+            
+            <div class="mt-4">
+                <h4>Account haqida</h4>
+                <p><strong>Username:</strong> {{ user.username }}</p>
+                <p><strong>Oxirgi Login:</strong> {{ user.last_login }}</p>
+                <p><strong>Account yaratildi:</strong> {{ user.date_joined }}</p>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Face Authentication System{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="text-center">Register</h2>
+    </div>
+    <div class="card-body">
+        <form method="post" id="registerForm">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Face Capture</label>
+                <div class="webcam-container">
+                    <video id="webcam" autoplay playsinline></video>
+                    <canvas id="canvas" class="hidden"></canvas>
+                    <input type="hidden" id="face_image" name="face_image">
+                </div>
+                <div class="d-grid gap-2 mt-2">
+                    <button type="button" id="captureBtn" class="btn btn-secondary">Suratga Olish</button>
+                    <div id="captureStatus" class="alert alert-info hidden mt-2">
+                        Capturing your face...
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary" id="registerBtn" disabled>Register</button>
+            </div>
+            
+            <div class="mt-3 text-center">
+                <p>Sizda allaqachon accaunt bormi? <a href="{% url 'login' %}">Login</a></p>
+                <p ALIGN="RIGHT">BEKFURR INC 2025</p>
+            </div>
+        </form>
+    </div>
+</div>+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Webcam handling
+    const webcamElement = document.getElementById('webcam');
+    const canvasElement = document.getElementById('canvas');
+    const captureBtn = document.getElementById('captureBtn');
+    const captureStatus = document.getElementById('captureStatus');
+    const faceImageInput = document.getElementById('face_image');
+    const registerBtn = document.getElementById('registerBtn');
+    
+    let stream = null;
+    
+    // Start webcam
+    async function startWebcam() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false
+            });
+            webcamElement.srcObject = stream;
+        } catch (err) {
+            console.error("Error accessing webcam:", err);
+            alert("Error accessing webcam. Please make sure your camera is connected and permissions are granted.");
+        }
+    }
+    
+    // Stop webcam
+    function stopWebcam() {
+        if (stream) {
+            stream.getTracks().forEach(track => {
+                track.stop();
+            });
+        }
+    }
+    
+    // Capture image from webcam
+    captureBtn.addEventListener('click', function() {
+        // Display canvas and hide video
+        canvasElement.classList.remove('hidden');
+        webcamElement.classList.add('hidden');
+        captureStatus.classList.remove('hidden');
+        
+        // Draw video frame to canvas
+        canvasElement.width = webcamElement.videoWidth;
+        canvasElement.height = webcamElement.videoHeight;
+        canvasElement.getContext('2d').drawImage(webcamElement, 0, 0);
+        
+        // Convert canvas to base64 image
+        const imageData = canvasElement.toDataURL('image/jpeg');
+        faceImageInput.value = imageData;
+        
+        // Send to server to check if face is detected
+        fetch('/api/capture-face/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ image_data: imageData })
+        })
+        .then(response => response.json())
+        .then(data => {
+            captureStatus.classList.add('hidden');
+            
+            if (data.success) {
+                captureBtn.textContent = 'Face Captured ✓';
+                captureBtn.classList.remove('btn-secondary');
+                captureBtn.classList.add('btn-success');
+                registerBtn.disabled = false;
+            } else {
+                alert('No face detected. Please try again.');
+                // Show video again
+                canvasElement.classList.add('hidden');
+                webcamElement.classList.remove('hidden');
+                captureBtn.textContent = 'Capture Face';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error capturing face. Please try again.');
+            captureStatus.classList.add('hidden');
+            canvasElement.classList.add('hidden');
+            webcamElement.classList.remove('hidden');
+        });
+    });
+    
+    // Start webcam when page loads
+    document.addEventListener('DOMContentLoaded', startWebcam);
+    
+    // Stop webcam when page unloads
+    window.addEventListener('beforeunload', stopWebcam);
+</script>
+{% endblock %}

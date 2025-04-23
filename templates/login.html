@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Face Authentication System{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="text-center">Login</h2>
+    </div>
+    <div class="card-body">
+        <ul class="nav nav-tabs mb-3" id="loginTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="password-tab" data-bs-toggle="tab" data-bs-target="#password-pane" type="button" role="tab">Password Login</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="face-tab" data-bs-toggle="tab" data-bs-target="#face-pane" type="button" role="tab">Face Login</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="loginTabContent">
+            <!-- Password Login Tab -->
+            <div class="tab-pane fade show active" id="password-pane" role="tabpanel">
+                <form method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="login_method" value="password">
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Face Login Tab -->
+            <div class="tab-pane fade" id="face-pane" role="tabpanel">
+                <form method="post" action="{% url 'login' %}" id="faceLoginForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="login_method" value="face">
+                    
+                    <div class="mb-3">
+                        <label for="username_face" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username_face" name="username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Face Verification</label>
+                        <div class="webcam-container">
+                            <video id="webcam" autoplay playsinline></video>
+                            <canvas id="canvas" class="hidden"></canvas>
+                            <input type="hidden" id="face_image" name="face_image">
+                        </div>
+                        <div class="d-grid gap-2 mt-2">
+                            <button type="button" id="captureBtn" class="btn btn-secondary">Capture Face</button>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary" id="faceLoginBtn" disabled>Login with Face</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="mt-3 text-center">
+            <p>Sizda accaunt yo'qmi? <a href="{% url 'register' %}">Register</a></p>
+            <p ALIGN="RIGHT">BEKFURR INC 2025</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Webcam handling for face login
+    const webcamElement = document.getElementById('webcam');
+    const canvasElement = document.getElementById('canvas');
+    const captureBtn = document.getElementById('captureBtn');
+    const faceImageInput = document.getElementById('face_image');
+    const faceLoginBtn = document.getElementById('faceLoginBtn');
+    const faceTab = document.getElementById('face-tab');
+    
+    let stream = null;
+    
+    // Start webcam when face tab is clicked
+    faceTab.addEventListener('click', startWebcam);
+    
+    // Start webcam
+    async function startWebcam() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false
+            });
+            webcamElement.srcObject = stream;
+        } catch (err) {
+            console.error("Error accessing webcam:", err);
+            alert("Error accessing webcam. Please make sure your camera is connected and permissions are granted.");
+        }
+    }
+    
+    // Stop webcam
+    function stopWebcam() {
+        if (stream) {
+            stream.getTracks().forEach(track => {
+                track.stop();
+            });
+        }
+    }
+    
+    // Capture image from webcam
+    captureBtn.addEventListener('click', function() {
+        // Draw video frame to canvas
+        canvasElement.width = webcamElement.videoWidth;
+        canvasElement.height = webcamElement.videoHeight;
+        canvasElement.getContext('2d').drawImage(webcamElement, 0, 0);
+        
+        // Convert canvas to base64 image
+        const imageData = canvasElement.toDataURL('image/jpeg');
+        faceImageInput.value = imageData;
+        
+        // Enable login button
+        faceLoginBtn.disabled = false;
+        
+        // Change button appearance
+        captureBtn.textContent = 'Face Captured ✓';
+        captureBtn.classList.remove('btn-secondary');
+        captureBtn.classList.add('btn-success');
+    });
+    
+    // Stop webcam when page unloads
+    window.addEventListener('beforeunload', stopWebcam);
+</script>
+{% endblock %}
